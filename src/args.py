@@ -23,7 +23,7 @@ class Args():
         parser = argparse.ArgumentParser()
 
         parser.add_argument('path', nargs='*', help="Path to file/directory")
-        parser.add_argument('--source-path', nargs='*', required=True, help="Path to source file/directory", type=str)
+        parser.add_argument('--source-path', nargs='*', required=True, help="Path to source file/directory or MediaInfo file", type=str)
         parser.add_argument('-s', '--screens', nargs='*', required=False, help="Number of screenshots", default=int(self.config['DEFAULT']['screens']))
         parser.add_argument('-c', '--category', nargs='*', required=False, help="Category [MOVIE, TV, FANRES]", choices=['movie', 'tv', 'fanres'])
         parser.add_argument('-t', '--type', nargs='*', required=False, help="Type [DISC, REMUX, ENCODE, WEBDL, WEBRIP, HDTV]", choices=['disc', 'remux', 'encode', 'webdl', 'web-dl', 'webrip', 'hdtv'])

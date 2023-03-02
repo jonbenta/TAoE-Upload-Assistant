@@ -46,6 +46,7 @@ try:
     import cli_ui
     from rich.progress import Progress, TextColumn, BarColumn, TimeRemainingColumn
     import platform
+    from binaryornot.check import is_binary
 except ModuleNotFoundError:
     console.print(traceback.print_exc())
     console.print('[bold red]Missing Module Found. Please reinstall required dependancies.')
@@ -178,8 +179,14 @@ class Prep():
                 mi = meta['mediainfo']
                 
             meta['mediainfo_text'] = MediaInfo.parse(videopath, output="STRING", full=False, mediainfo_options={'inform_version' : '1'}).replace(videopath, os.path.basename(videopath))
-            source_videopath, _ = self.get_video(meta['source_path'], meta.get('mode', 'discord'))
-            meta['source_mediainfo_text'] = MediaInfo.parse(source_videopath, output="STRING", full=False, mediainfo_options={'inform_version' : '1'}).replace(source_videopath, os.path.basename(source_videopath))
+
+            if Path(meta['source_path']).is_file() and not is_binary(meta['source_path']):
+                open_sourcepath = open(meta['source_path'], 'r')
+                meta['source_mediainfo_text'] = open_sourcepath.read()
+                open_sourcepath.close()
+            else:
+                source_videopath, _ = self.get_video(meta['source_path'], meta.get('mode', 'discord'))
+                meta['source_mediainfo_text'] = MediaInfo.parse(source_videopath, output="STRING", full=False, mediainfo_options={'inform_version' : '1'}).replace(source_videopath, os.path.basename(source_videopath))
 
             if meta.get('resolution', None) == None:
                 meta['resolution'] = self.get_resolution(guessit(video), meta['uuid'], base_dir)
