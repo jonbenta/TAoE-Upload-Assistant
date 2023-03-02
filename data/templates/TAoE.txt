@@ -1,0 +1,25 @@
+[center][img]{{ taoe_banner_url }}[/img]
+
+{% if category == 'MOVIE' %}
+    [img]{{ poster }}[/img]
+
+    [b]{{ title }} ({{ year }})[/b]
+    [url=https://www.imdb.com/title/tt{{ imdb_id }}][img]https://i.postimg.cc/sgsdwtVs/IMDB.jpg[/img][/url]  [url=https://www.themoviedb.org/movie/{{ tmdb }}][img]https://i.postimg.cc/X7mttctc/tmdb.png[/img][/url]
+{% else %}
+    [img]{{ poster }}[/img]
+
+    [b]{{ title }} ({{ year }})[/b]
+    [url=https://www.tvmaze.com/shows/{{ tvmaze_id }}][img]https://i.postimg.cc/cJJqNwgz/TVMaze.png[/img]  [/url][url=https://www.thetvdb.com/dereferrer/series/{{ tvdb_id }}][img]https://i.postimg.cc/xdFhQv4P/tvdb.png[/img][/url]
+{% endif %}
+
+{% for image in image_list %}
+    [url={{ image['raw_url'] }}][img]{{ image['raw_url'] }}[/img][/url]
+{% endfor %}[/center]
+
+[u][b]Encode Media Information[/b][/u]
+
+{{ mediainfo_text }}
+
+[u][b]Source Media Information[/b][/u]
+
+{{ source_mediainfo_text }}

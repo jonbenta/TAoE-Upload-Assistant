@@ -176,6 +176,10 @@ class Prep():
                 meta['mediainfo'] = mi
             else:
                 mi = meta['mediainfo']
+                
+            meta['mediainfo_text'] = MediaInfo.parse(videopath, output="STRING", full=False, mediainfo_options={'inform_version' : '1'}).replace(videopath, os.path.basename(videopath))
+            source_videopath, _ = self.get_video(meta['source_path'], meta.get('mode', 'discord'))
+            meta['source_mediainfo_text'] = MediaInfo.parse(source_videopath, output="STRING", full=False, mediainfo_options={'inform_version' : '1'}).replace(source_videopath, os.path.basename(source_videopath))
 
             if meta.get('resolution', None) == None:
                 meta['resolution'] = self.get_resolution(guessit(video), meta['uuid'], base_dir)

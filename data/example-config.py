@@ -8,7 +8,7 @@ config = {
         "img_host_1": "imgbb",
         "img_host_2": "ptpimg",
         "img_host_3": "imgbox",
-	    "img_host_4": "pixhost",
+        "img_host_4": "pixhost",
         # "img_host_5": "",
 
 
@@ -18,9 +18,9 @@ config = {
 
 
         # The name of your default torrent client, set in the torrent client sections below
-        "default_torrent_client" : "Client1"
+        "default_torrent_client" : "Client1",
 
-
+        "taoe_banner_url": "TAoE banner url"
     },
 
     "TRACKERS" : {
