@@ -82,7 +82,9 @@ class TL():
         open_desc.write('\n\n')
         open_desc.write(open_info.read())
         open_info.close()
+        open_desc.close()
         
+        open_desc = open(f"{meta['base_dir']}/tmp/{meta['uuid']}/DESCRIPTION.txt", 'r')
         open_desc.seek(0)
         open_torrent = open(f"{meta['base_dir']}/tmp/{meta['uuid']}/[{self.tracker}]{meta['clean_name']}.torrent", 'rb')
         files = {
