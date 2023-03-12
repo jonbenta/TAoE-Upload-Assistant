@@ -353,6 +353,8 @@ class Prep():
         meta['audio'], meta['channels'], meta['has_commentary'] = self.get_audio_v2(mi, meta, bdinfo)
         if meta['tag'][1:].startswith(meta['channels']):
             meta['tag'] = meta['tag'].replace(f"-{meta['channels']}", '')
+        if meta.get('no_tag', False):
+            meta['tag'] = ""
         meta['3D'] = self.is_3d(mi, bdinfo)
         meta['source'], meta['type'] = self.get_source(meta['type'], video, meta['path'], meta['is_disc'], meta)
         if meta.get('service', None) in (None, ''):
@@ -730,6 +732,8 @@ class Prep():
                             time.sleep(1)
                         elif self.img_host == "ptpimg":
                             i += 1
+                        elif self.img_host == "lensdump":
+                            i += 1
                         else:
                             console.print("[red]Image too large for your image host, retaking")
                             time.sleep(1)
@@ -860,6 +864,8 @@ class Prep():
                                     time.sleep(1)
                                 elif self.img_host == "ptpimg":
                                     i += 1
+                                elif self.img_host == "lensdump":
+                                    i += 1
                                 else:
                                     console.print("[red]Image too large for your image host, retaking")
                                     retake = True
@@ -959,7 +965,7 @@ class Prep():
                                     i += 1
                                 elif os.path.getsize(Path(image)) <= 10000000 and self.img_host in ["imgbox", 'pixhost'] and retake == False:
                                     i += 1
-                                elif self.img_host == "ptpimg" and retake == False:
+                                elif self.img_host in ["ptpimg", "lensdump"] and retake == False:
                                     i += 1
                                 elif self.img_host == "freeimage.host":
                                     console.print("[bold red]Support for freeimage.host has been removed. Please remove from your config")
@@ -1397,6 +1403,8 @@ class Prep():
             episodes = mal_id = 0
         if mal_id in [None, 0]:
             mal_id = mal
+        if not episodes:
+            episodes = 0
         return romaji, mal_id, eng_title, season_year, episodes
 
 
@@ -2147,6 +2155,26 @@ class Prep():
                                 progress.console.print("[yellow]ptpimg failed, trying next image host")
                                 progress.stop()
                                 newhost_list, i = self.upload_screens(meta, screens - i, img_host_num + 1, i, total_screens, [], return_dict)
+                        elif img_host == "lensdump":
+                            url = "https://lensdump.com/api/1/upload"
+                            data = {
+                                'image': base64.b64encode(open(image, "rb").read()).decode('utf8')
+                            }
+                            headers = {
+                                'X-API-Key': self.config['DEFAULT']['lensdump_api'],
+                            }
+                            try:
+                                response = requests.post(url, data=data, headers=headers, timeout=timeout)
+                                response = response.json()
+                                if response.get('status_code') != 200:
+                                    progress.console.print(response)
+                                img_url = response['data'].get('medium', response['data']['image'])['url']
+                                web_url = response['data']['url_viewer']
+                                raw_url = response['data']['image']['url']
+                            except Exception:
+                                progress.console.print("[yellow]lensdump failed, trying next image host")
+                                progress.stop()
+                                newhost_list, i = self.upload_screens(meta, screens - i , img_host_num + 1, i, total_screens, [], return_dict)
                         else:
                             console.print("[bold red]Please choose a supported image host in your config")
                             exit()
@@ -2400,9 +2428,11 @@ class Prep():
                 tag = parsed.get('release_group', "")
                 if tag != "":
                     meta['tag'] = f"-{tag}"
-                try:
-                    if len(filelist) == 1:
-                        episodes = parsed['episode_number']
+                if len(filelist) == 1:
+                    try:
+                        episodes = parsed.get('episode_number', guessit(video).get('episode', '1'))
+                        if not isinstance(episodes, list) and not episodes.isnumeric():
+                            episodes = guessit(video)['episode']
                         if type(episodes) == list:
                             episode = ""
                             for item in episodes:
@@ -2412,34 +2442,38 @@ class Prep():
                         else:
                             episode_int = str(int(episodes))
                             episode = f"E{str(int(episodes)).zfill(2)}"
-                    else:
-                        episode = ""
-                        episode_int = "0"
-                        meta['tv_pack'] = 1
-                except Exception:
+                    except Exception:
+                        episode = "E01"
+                        episode_int = "1"
+                        console.print('[bold yellow]There was an error guessing the episode number. Guessing E01. Use [bold green]--episode #[/bold green] to correct if needed')
+                        await asyncio.sleep(1.5)
+                else:
                     episode = ""
                     episode_int = "0"
                     meta['tv_pack'] = 1
+                    
                 try:
                     if meta.get('season_int'):
                         season = meta.get('season_int')
                     else:
-                        season = parsed['anime_season']
+                        season = parsed.get('anime_season', guessit(video)['season'])
                     season_int = season
                     season = f"S{season.zfill(2)}"
                 except Exception:
                     try:
-                        if int(parsed['episode_number']) >= anilist_episodes:
+                        if int(episode_int) >= anilist_episodes:
                             params = {
                                 'id' : str(meta['tvdb_id']),
                                 'origin' : 'tvdb',
-                                'absolute' : str(parsed['episode_number']),
+                                'absolute' : str(episode_int),
                                 # 'destination' : 'tvdb'
                             }
                             url = "https://thexem.info/map/single"
                             response = requests.post(url, params=params).json()
                             if response['result'] == "failure":
                                 raise XEMNotFound
+                            if meta['debug']:
+                                console.log(f"[cyan]TheXEM Absolute -> Standard[/cyan]\n{response}")
                             season_int = str(response['data']['scene']['season'])
                             season = f"S{str(response['data']['scene']['season']).zfill(2)}"
                             if len(filelist) == 1:
@@ -2451,6 +2485,8 @@ class Prep():
                             season_int = "1"
                             names_url = f"https://thexem.info/map/names?origin=tvdb&id={str(meta['tvdb_id'])}"
                             names_response = requests.get(names_url).json()
+                            if meta['debug']:
+                                console.log(f'[cyan]Matching Season Number from TheXEM\n{names_response}')
                             difference = 0
                             if names_response['result'] == "success":
                                 for season_num, values in names_response['data'].items():
@@ -2486,6 +2522,8 @@ class Prep():
                             else:
                                 raise XEMNotFound
                     except Exception:
+                        if meta['debug']:
+                            console.print_exception()
                         try:
                             season = guessit(video)['season']
                             season_int = season
