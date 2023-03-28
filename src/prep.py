@@ -831,7 +831,7 @@ class Prep():
                                             n -= num_screens
                                         if loops < 6:
                                             loops = loops + 1
-                                            voblength, n = _is_vob_good(n, loops)
+                                            voblength, n = _is_vob_good(n, loops, num_screens)
                                             return voblength, n
                                         else:
                                             return 300, n
@@ -2554,6 +2554,7 @@ class Prep():
             else:
                 episode_int = meta['manual_episode'].lower().replace('e', '')
                 meta['episode'] = f"E{meta['manual_episode'].lower().replace('e', '').zfill(2)}"
+                meta['tv_pack'] = 0
             
             # if " COMPLETE " in Path(video).name.replace('.', ' '):
             #     meta['season'] = "COMPLETE"

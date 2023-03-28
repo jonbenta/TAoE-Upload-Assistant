@@ -32,7 +32,7 @@ class AITHER():
     async def upload(self, meta):
         common = COMMON(config=self.config)
         await common.edit_torrent(meta, self.tracker, self.source_flag)
-        await common.unit3d_edit_desc(meta, self.tracker, self.signature, comparison=True, img_width_format_revert=True)
+        await common.unit3d_edit_desc(meta, self.tracker, self.signature, comparison=True)
         cat_id = await self.get_cat_id(meta['category'])
         type_id = await self.get_type_id(meta['type'])
         resolution_id = await self.get_res_id(meta['resolution'])
@@ -112,12 +112,12 @@ class AITHER():
             
             for track in mi['media']['track']:
                 if track['@type'] == "Audio":
-                    if track.get('Language', 'None') == 'en':
+                    if track.get('Language', 'None').startswith('en'):
                         has_eng_audio = True
             if not has_eng_audio:
                 audio_lang = mi['media']['track'][2].get('Language_String', "").upper()
                 if audio_lang != "":
-                    aither_name = aither_name.replace(meta['resolution'], f"{audio_lang} {meta['resolution']}")
+                    aither_name = aither_name.replace(meta['resolution'], f"{audio_lang} {meta['resolution']}", 1)
         else:
             for audio in meta['bdinfo']['audio']:
                 if audio['language'] == 'English':
@@ -125,7 +125,7 @@ class AITHER():
             if not has_eng_audio:
                 audio_lang = meta['bdinfo']['audio'][0]['language'].upper()
                 if audio_lang != "":
-                    aither_name = aither_name.replace(meta['resolution'], f"{audio_lang} {meta['resolution']}")
+                    aither_name = aither_name.replace(meta['resolution'], f"{audio_lang} {meta['resolution']}", 1)
         # aither_name = aither_name.replace(meta.get('video_encode', meta.get('video_codec', "")), meta.get('video_encode', meta.get('video_codec', "")).replace('.', ''))
         return aither_name
 
