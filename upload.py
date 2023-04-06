@@ -124,7 +124,26 @@ async def do_the_thing(base_dir):
             console.print(Markdown(f"- {md_text.rstrip()}\n\n", style=Style(color='cyan')))
             console.print("\n\n")
         elif not os.path.exists(os.path.dirname(path)):
-            console.print(f"[red]Path: [bold red]{path}[/bold red] does not exist")
+            split_path = path.split()
+            p1 = split_path[0]
+            for i, each in enumerate(split_path):
+                try:
+                    if os.path.exists(p1) and not os.path.exists(f"{p1} {split_path[i+1]}"):
+                        queue.append(p1)
+                        p1 = split_path[i+1]
+                    else:
+                        p1 += f" {split_path[i+1]}"
+                except IndexError:
+                    if os.path.exists(p1):
+                        queue.append(p1)
+                    else:
+                        console.print(f"[red]Path: [bold red]{p1}[/bold red] does not exist")
+            if len(queue) >= 1:
+                md_text = "\n - ".join(queue)
+                console.print("\n[bold green]Queuing these files:[/bold green]", end='')
+                console.print(Markdown(f"- {md_text.rstrip()}\n\n", style=Style(color='cyan')))
+                console.print("\n\n")
+            
         else:
             # Add Search Here
             console.print(f"[red]There was an issue with your input. If you think this was not an issue, please make a report that includes the full command used.")
@@ -143,7 +162,7 @@ async def do_the_thing(base_dir):
                     overwrite_list = [
                         'trackers', 'dupe', 'debug', 'anon', 'category', 'type', 'screens', 'nohash', 'manual_edition', 'imdb', 'tmdb_manual', 'mal', 'manual', 
                         'hdb', 'ptp', 'blu', 'no_season', 'no_aka', 'no_year', 'no_dub', 'no_tag', 'client', 'desclink', 'descfile', 'desc', 'draft', 'region', 'freeleech', 
-                        'personalrelease', 'unattended', 'season', 'episode', 'torrent_creation', 'qbit_tag', 'skip_imghost_upload', 'imghost', 'manual_source', 
+                        'personalrelease', 'unattended', 'season', 'episode', 'torrent_creation', 'qbit_tag', 'qbit_cat', 'skip_imghost_upload', 'imghost', 'manual_source'
                         'source_path'
                     ]
                     if meta.get(key, None) != value and key in overwrite_list:
