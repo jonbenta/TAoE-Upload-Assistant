@@ -27,7 +27,10 @@ config = {
         # The name of your default torrent client, set in the torrent client sections below
         "default_torrent_client" : "Client1",
 
-        "taoe_banner_url": "TAoE banner url"
+        # Play the bell sound effect when asking for confirmation
+        "sfx_on_prompt" : True,
+
+        "taoe_banner_url": "TAoE banner url",
     },
 
     "TRACKERS" : {
