@@ -10,6 +10,7 @@ from pathlib import Path
 
 class TL():
     CATEGORIES = {
+        'Anime': 34,
         'Movie4K': 47,
         'MovieBluray': 13,
         'MovieBlurayRip': 14,
@@ -40,6 +41,9 @@ class TL():
         pass
     
     async def get_cat_id(self, common, meta):
+        if meta.get('anime', 0) and not meta.get('tv_pack', 0): 
+            return self.CATEGORIES['Anime']
+
         if meta['category'] == 'MOVIE':
             if meta['original_language'] != 'en':
                 return self.CATEGORIES['MovieForeign']
@@ -58,7 +62,7 @@ class TL():
             elif 'WEB' in meta['type']:
                 return self.CATEGORIES['MovieWebrip']
         elif meta['category'] == 'TV':
-            if meta['original_language'] != 'en': 
+            if meta['original_language'] != 'en' and not meta.get('anime', 0): 
                 return self.CATEGORIES['TvForeign']
             elif meta.get('tv_pack', 0):
                 return self.CATEGORIES['TvBoxsets']
@@ -75,7 +79,7 @@ class TL():
         cat_id = await self.get_cat_id(common, meta)
         await common.unit3d_edit_desc(meta, self.tracker, self.signature)
 
-        open_desc = open(f"{meta['base_dir']}/tmp/{meta['uuid']}/[{self.tracker}]DESCRIPTION.txt", 'a+')
+        open_desc = open(f"{meta['base_dir']}/tmp/{meta['uuid']}/[{self.tracker}]DESCRIPTION.txt", 'a+', encoding='utf-8')
         
         info_filename = 'BD_SUMMARY_00' if meta['bdinfo'] != None else 'MEDIAINFO_CLEANPATH'
         open_info = open(f"{meta['base_dir']}/tmp/{meta['uuid']}/{info_filename}.txt", 'r', encoding='utf-8')
