@@ -28,6 +28,7 @@ from src.trackers.PTER import PTER
 from src.trackers.JPTV import JPTV
 from src.trackers.TL import TL
 from src.trackers.TDC import TDC
+from src.trackers.HDT import HDT
 import json
 from pathlib import Path
 import asyncio
@@ -162,7 +163,7 @@ async def do_the_thing(base_dir):
                     overwrite_list = [
                         'trackers', 'dupe', 'debug', 'anon', 'category', 'type', 'screens', 'nohash', 'manual_edition', 'imdb', 'tmdb_manual', 'mal', 'manual', 
                         'hdb', 'ptp', 'blu', 'no_season', 'no_aka', 'no_year', 'no_dub', 'no_tag', 'client', 'desclink', 'descfile', 'desc', 'draft', 'region', 'freeleech', 
-                        'personalrelease', 'unattended', 'season', 'episode', 'torrent_creation', 'qbit_tag', 'qbit_cat', 'skip_imghost_upload', 'imghost', 'manual_source'
+                        'personalrelease', 'unattended', 'season', 'episode', 'torrent_creation', 'qbit_tag', 'qbit_cat', 'skip_imghost_upload', 'imghost', 'manual_source', 'webdv', 'hardcoded-subs',
                         'source_path'
                     ]
                     if meta.get(key, None) != value and key in overwrite_list:
@@ -234,11 +235,11 @@ async def do_the_thing(base_dir):
         ####################################
         common = COMMON(config=config)
         api_trackers = ['BLU', 'AITHER', 'STC', 'R4E', 'STT', 'RF', 'ACM','LCD','LST','HUNO', 'SN', 'LT', 'NBL', 'ANT', 'JPTV', 'TDC']
-        http_trackers = ['HDB', 'TTG', 'FL', 'PTER']
+        http_trackers = ['HDB', 'TTG', 'FL', 'PTER', 'HDT']
         tracker_class_map = {
             'BLU' : BLU, 'BHD': BHD, 'AITHER' : AITHER, 'STC' : STC, 'R4E' : R4E, 'THR' : THR, 'STT' : STT, 'HP' : HP, 'PTP' : PTP, 'RF' : RF, 'SN' : SN, 
             'ACM' : ACM, 'HDB' : HDB, 'LCD': LCD, 'TTG' : TTG, 'LST' : LST, 'HUNO': HUNO, 'FL' : FL, 'LT' : LT, 'NBL' : NBL, 'ANT' : ANT, 'PTER': PTER, 'JPTV' : JPTV,
-            'TL': TL, 'TDC': TDC,
+            'TL' : TL, 'TDC' : TDC, 'HDT' : HDT,
             }
 
         for tracker in trackers:
