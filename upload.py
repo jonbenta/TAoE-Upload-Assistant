@@ -1,5 +1,4 @@
 import requests
-from src.trackers.RF import RF
 from src.args import Args
 from src.clients import Clients
 from src.prep import Prep
@@ -25,10 +24,12 @@ from src.trackers.LT import LT
 from src.trackers.NBL import NBL
 from src.trackers.ANT import ANT
 from src.trackers.PTER import PTER
+from src.trackers.MTV import MTV
 from src.trackers.JPTV import JPTV
 from src.trackers.TL import TL
 from src.trackers.TDC import TDC
 from src.trackers.HDT import HDT
+from src.trackers.RF import RF
 import json
 from pathlib import Path
 import asyncio
@@ -184,6 +185,7 @@ async def do_the_thing(base_dir):
         meta = await prep.gather_prep(meta=meta, mode='cli') 
         meta['name_notag'], meta['name'], meta['clean_name'], meta['potential_missing'] = await prep.get_name(meta)
 
+
         if not os.path.exists(os.path.abspath(f"{meta['base_dir']}/tmp/{meta['uuid']}/BASE.torrent")):
             reuse_torrent = None
             if meta.get('rehash', False) == False:
@@ -235,11 +237,11 @@ async def do_the_thing(base_dir):
         ####################################
         common = COMMON(config=config)
         api_trackers = ['BLU', 'AITHER', 'STC', 'R4E', 'STT', 'RF', 'ACM','LCD','LST','HUNO', 'SN', 'LT', 'NBL', 'ANT', 'JPTV', 'TDC']
-        http_trackers = ['HDB', 'TTG', 'FL', 'PTER', 'HDT']
+        http_trackers = ['HDB', 'TTG', 'FL', 'PTER', 'HDT', 'MTV']
         tracker_class_map = {
             'BLU' : BLU, 'BHD': BHD, 'AITHER' : AITHER, 'STC' : STC, 'R4E' : R4E, 'THR' : THR, 'STT' : STT, 'HP' : HP, 'PTP' : PTP, 'RF' : RF, 'SN' : SN, 
             'ACM' : ACM, 'HDB' : HDB, 'LCD': LCD, 'TTG' : TTG, 'LST' : LST, 'HUNO': HUNO, 'FL' : FL, 'LT' : LT, 'NBL' : NBL, 'ANT' : ANT, 'PTER': PTER, 'JPTV' : JPTV,
-            'TL' : TL, 'TDC' : TDC, 'HDT' : HDT,
+            'TL' : TL, 'TDC' : TDC, 'HDT' : HDT, 'MTV': MTV
             }
 
         for tracker in trackers:
@@ -266,6 +268,8 @@ async def do_the_thing(base_dir):
                     meta = dupe_check(dupes, meta)
                     if meta['upload'] == True:
                         await tracker_class.upload(meta)
+                        if tracker == 'SN':
+                            await asyncio.sleep(16)
                         await client.add_to_client(meta, tracker_class.tracker)
             
             if tracker in http_trackers:
@@ -407,7 +411,6 @@ async def do_the_thing(base_dir):
                         continue
                     await tracker_class.upload(meta)
                     await client.add_to_client(meta, tracker_class.tracker)
-            
             
 
 

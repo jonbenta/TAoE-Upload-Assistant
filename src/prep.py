@@ -387,6 +387,8 @@ class Prep():
             if meta['debug']:
                 console.print(meta['image_list'])
             # meta['uploaded_screens'] = True
+        elif meta.get('skip_imghost_upload', False):
+            meta['image_list'] = []
         
         meta = await self.gen_desc(meta)
         return meta
@@ -2377,7 +2379,7 @@ class Prep():
 
                 except Exception:
                     try:
-                        guess_date = datetime.fromisoformat(meta.get('manual_date', guessit(video)['date'])) if meta.get('manual_date') else guessit(video)['date']
+                        guess_date = meta.get('manual_date', guessit(video)['date']) if meta.get('manual_date') else guessit(video)['date']
                         season_int, episode_int = self.daily_to_tmdb_season_episode(meta.get('tmdb'), guess_date)
                         # season = f"S{season_int.zfill(2)}"
                         # episode = f"E{episode_int.zfill(2)}"
@@ -2385,6 +2387,7 @@ class Prep():
                         episode = ""
                         is_daily = True
                     except Exception:
+                        console.print_exception()
                         season_int = "1"
                         season = "S01"
                 try:
@@ -2592,7 +2595,7 @@ class Prep():
             'Comedians in Cars Getting Coffee': 'CCGC', 'CHGD': 'CHGD', 'CHRGD': 'CHGD', 'CMAX': 'CMAX', 'Cinemax': 'CMAX', 
             'CMOR': 'CMOR', 'CMT': 'CMT', 'Country Music Television': 'CMT', 'CN': 'CN', 'Cartoon Network': 'CN', 'CNBC': 'CNBC', 
             'CNLP': 'CNLP', 'Canal+': 'CNLP', 'COOK': 'COOK', 'CORE': 'CORE', 'CR': 'CR', 'Crunchy Roll': 'CR', 'Crave': 'CRAV', 
-            'CRIT': 'CRIT', 'CRKL': 'CRKL', 'Crackle': 'CRKL', 'CSPN': 'CSPN', 'CSpan': 'CSPN', 'CTV': 'CTV', 'CUR': 'CUR', 
+            'CRIT': 'CRIT', 'Criterion' : 'CRIT', 'CRKL': 'CRKL', 'Crackle': 'CRKL', 'CSPN': 'CSPN', 'CSpan': 'CSPN', 'CTV': 'CTV', 'CUR': 'CUR', 
             'CuriosityStream': 'CUR', 'CW': 'CW', 'The CW': 'CW', 'CWS': 'CWS', 'CWSeed': 'CWS', 'DAZN': 'DAZN', 'DCU': 'DCU', 
             'DC Universe': 'DCU', 'DDY': 'DDY', 'Digiturk Diledigin Yerde': 'DDY', 'DEST': 'DEST', 'DramaFever': 'DF', 'DHF': 'DHF', 
             'Deadhouse Films': 'DHF', 'DISC': 'DISC', 'Discovery': 'DISC', 'DIY': 'DIY', 'DIY Network': 'DIY', 'DOCC': 'DOCC', 
@@ -2918,8 +2921,9 @@ class Prep():
         seasons = show.info().get('seasons')
         season = '1'
         episode = '1'
+        date = datetime.fromisoformat(str(date))
         for each in seasons:
-            air_date = date.fromisoformat(each['air_date'])
+            air_date = datetime.fromisoformat(each['air_date'])
             if air_date <= date:
                 season = str(each['season_number'])
         season_info = tmdb.TV_Seasons(tmdbid, season).info().get('episodes')

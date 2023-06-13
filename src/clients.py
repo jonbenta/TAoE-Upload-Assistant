@@ -44,18 +44,7 @@ class Clients():
         client = self.config['TORRENT_CLIENTS'][default_torrent_client]
         torrent_client = client['torrent_client']
         
-        local_path = list_local_path = self.config['TORRENT_CLIENTS'][default_torrent_client].get('local_path','/LocalPath')
-        remote_path = list_remote_path = self.config['TORRENT_CLIENTS'][default_torrent_client].get('remote_path', '/RemotePath')
-        if isinstance(local_path, list):
-            for i in range(len(local_path)):
-                if os.path.normpath(local_path[i]).lower() in meta['path'].lower():
-                    list_local_path = local_path[i]
-                    list_remote_path = remote_path[i]
-            
-        local_path = os.path.normpath(list_local_path)
-        remote_path = os.path.normpath(list_remote_path)
-        if local_path.endswith(os.sep):
-            remote_path = remote_path + os.sep
+        local_path, remote_path = await self.remote_path_map(meta)
         
         console.print(f"[bold green]Adding to {torrent_client}")
         if torrent_client.lower() == "rtorrent":
@@ -141,6 +130,13 @@ class Clients():
             elif len(torrent.files) == len(meta['filelist']):
                 torrent_filepath = os.path.commonpath(torrent.files)
                 actual_filepath = os.path.commonpath(meta['filelist'])
+                local_path, remote_path = await self.remote_path_map(meta)
+                if local_path.lower() in meta['path'].lower() and local_path.lower() != remote_path.lower():
+                    actual_filepath = torrent_path.replace(local_path, remote_path)
+                    actual_filepath = torrent_path.replace(os.sep, '/')
+                if meta['debug']:
+                    console.log(f"torrent_filepath: {torrent_filepath}")
+                    console.log(f"actual_filepath: {actual_filepath}")
                 if torrent_filepath in actual_filepath:
                     valid = True
         else:
@@ -183,20 +179,43 @@ class Clients():
             console.print("[bold red]APIConnectionError: INCORRECT HOST/PORT")
             return None
 
+        # Remote path map if needed
+        remote_path_map = False
+        local_path, remote_path = await self.remote_path_map(meta)
+        if local_path.lower() in meta['path'].lower() and local_path.lower() != remote_path.lower():
+            remote_path_map = True
+
         torrents = qbt_client.torrents.info()
         for torrent in torrents:
-            torrent_path = torrent.content_path
+            try:
+                torrent_path = torrent.get('content_path', f"{torrent.save_path}{torrent.name}")
+            except AttributeError:
+                if meta['debug']:
+                    console.print(torrent)
+                    console.print_exception()
+                continue
+            if remote_path_map:
+                torrent_path = torrent_path.replace(remote_path, local_path)
+                torrent_path = torrent_path.replace(os.sep, '/').replace('/', os.sep)
+
             if meta['is_disc'] in ("", None) and len(meta['filelist']) == 1:
+                if meta['debug']:
+                    console.log(f"[yellow]{torrent_path=}\n{meta['path']=}\n")
                 if torrent_path == meta['filelist'][0] and len(torrent.files) == len(meta['filelist']):
                     valid, torrent_path = await self.is_valid_torrent(meta, f"{torrent_storage_dir}/{torrent.hash}.torrent", torrent.hash, 'qbit', print_err=False)
                     if valid:
                         console.print(f"[green]Found a matching .torrent with hash: [bold yellow]{torrent.hash}")
                         return torrent.hash
             elif meta['path'] == torrent_path:
+                if meta['debug']:
+                    console.log(f"[yellow]{torrent_path=}\n{meta['path']=}\n")
                 valid, torrent_path = await self.is_valid_torrent(meta, f"{torrent_storage_dir}/{torrent.hash}.torrent", torrent.hash, 'qbit', print_err=False)
                 if valid:
                     console.print(f"[green]Found a matching .torrent with hash: [bold yellow]{torrent.hash}")
                     return torrent.hash
+            else:
+                if meta['debug']:
+                    console.log(f"[red]{torrent_path=}\n{meta['path']=}\n")
         return None
 
 
@@ -375,3 +394,24 @@ class Clients():
             offset += fileinfo["length"]
 
         return metainfo
+
+
+    async def remote_path_map(self, meta):
+        if meta.get('client', None) == None:
+            torrent_client = self.config['DEFAULT']['default_torrent_client']
+        else:
+            torrent_client = meta['client']
+        local_path = list_local_path = self.config['TORRENT_CLIENTS'][torrent_client].get('local_path','/LocalPath')
+        remote_path = list_remote_path = self.config['TORRENT_CLIENTS'][torrent_client].get('remote_path', '/RemotePath')
+        if isinstance(local_path, list):
+            for i in range(len(local_path)):
+                if os.path.normpath(local_path[i]).lower() in meta['path'].lower():
+                    list_local_path = local_path[i]
+                    list_remote_path = remote_path[i]
+            
+        local_path = os.path.normpath(list_local_path)
+        remote_path = os.path.normpath(list_remote_path)
+        if local_path.endswith(os.sep):
+            remote_path = remote_path + os.sep
+
+        return local_path, remote_path

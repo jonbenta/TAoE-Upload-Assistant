@@ -109,7 +109,8 @@ class BHD():
                         data['imdb_id'] = 1
                         response = requests.post(url=url, files=files, data=data, headers=headers)
                         response = response.json()
-
+                    elif response['satus_message'].startswith('Invalid name value'):
+                        console.print(f"[bold yellow]Submitted Name: {bhd_name}")
                 console.print(response)
             except:
                 console.print("It may have uploaded, go check")
@@ -326,6 +327,8 @@ class BHD():
             audio = ' '.join(audio.split())
             name = name.replace(audio, f"{meta.get('video_codec')} {audio}")
         name = name.replace("DD+", "DDP")
-        if meta['type'] == 'WEBDL' and meta.get('has_encode_settings', False) == True:
-            name = name.replace('H.264', 'x264')
+        # if meta['type'] == 'WEBDL' and meta.get('has_encode_settings', False) == True:
+        #     name = name.replace('H.264', 'x264')
+        if meta['category'] == "TV" and meta.get('tv_pack', 0) == 0 and meta.get('episode_title_storage', '').strip() != '' and meta['episode'].strip() != '':
+            name = name.replace(meta['episode'], f"{meta['episode']} {meta['episode_title_storage']}", 1)
         return name

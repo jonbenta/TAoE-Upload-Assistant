@@ -178,7 +178,7 @@ class HDB():
         if 'HDR' in meta.get('hdr', ''):
             if 'HDR10+' not in meta['hdr']:
                 hdb_name = hdb_name.replace('HDR', 'HDR10')
-        if meta.get('type') in ('WEBDL', 'WEBRIP', 'ENCODE'):
+        if meta.get('type') in ('WEBDL', 'WEBRIP', 'ENCODE') and "DD" in meta['audio']:
             hdb_name = hdb_name.replace(meta['audio'], meta['audio'].replace(' ', '', 1).replace('Atmos', ''))
         else:
             hdb_name = hdb_name.replace(meta['audio'], meta['audio'].replace('Atmos', ''))
@@ -192,8 +192,8 @@ class HDB():
         hdb_name = hdb_name.replace('Dubbed', '').replace('Dual-Audio', '')
         hdb_name = hdb_name.replace('REMUX', 'Remux')
         hdb_name = ' '.join(hdb_name.split())
-        hdb_name = re.sub("[^0-9a-zA-ZÀ-ÿ. &+'\-\[\]]+", "", hdb_name)
-        hdb_name = hdb_name.replace(' ', '.').replace('..', '.')
+        hdb_name = re.sub("[^0-9a-zA-ZÀ-ÿ. :&+'\-\[\]]+", "", hdb_name)
+        hdb_name = hdb_name.replace(' .', '.').replace('..', '.')
 
         return hdb_name 
 
@@ -431,8 +431,7 @@ class HDB():
             desc = bbcode.convert_code_to_quote(desc)
             desc = bbcode.convert_spoiler_to_hide(desc)
             desc = bbcode.convert_comparison_to_centered(desc, 1000)
-            desc = desc.replace('[img]', '[imgw]').replace('[/img]', '[/imgw]')
-            desc = re.sub("(\[img=\d+)]", "[imgw]", desc, flags=re.IGNORECASE)
+            desc = re.sub("(\[img=\d+)]", "[img]", desc, flags=re.IGNORECASE)
             descfile.write(desc)
             if self.rehost_images == True:
                 console.print("[green]Rehosting Images...")
@@ -444,7 +443,8 @@ class HDB():
                     descfile.write("[center]")
                     for each in range(len(images[:int(meta['screens'])])):
                         img_url = images[each]['img_url']
-                        descfile.write(f"[imgw={img_url}]")
+                        web_url = images[each]['web_url']
+                        descfile.write(f"[url={web_url}][img]{img_url}[/img][/url]")
                     descfile.write("[/center]")
             if self.signature != None:
                 descfile.write(self.signature)
