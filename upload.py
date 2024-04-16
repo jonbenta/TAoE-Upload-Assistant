@@ -30,6 +30,9 @@ from src.trackers.TL import TL
 from src.trackers.TDC import TDC
 from src.trackers.HDT import HDT
 from src.trackers.RF import RF
+from src.trackers.OE import OE
+from src.trackers.BHDTV import BHDTV
+from src.trackers.RTF import RTF
 import json
 from pathlib import Path
 import asyncio
@@ -97,6 +100,8 @@ async def do_the_thing(base_dir):
     if meta['cleanup'] and os.path.exists(f"{base_dir}/tmp"):
         shutil.rmtree(f"{base_dir}/tmp")
         console.print("[bold green]Sucessfully emptied tmp directory")
+    if not meta['path']:
+        exit(0)
     path = meta['path']
     path = os.path.abspath(path)
     if path.endswith('"'):
@@ -163,7 +168,7 @@ async def do_the_thing(base_dir):
                 for key, value in saved_meta.items():
                     overwrite_list = [
                         'trackers', 'dupe', 'debug', 'anon', 'category', 'type', 'screens', 'nohash', 'manual_edition', 'imdb', 'tmdb_manual', 'mal', 'manual', 
-                        'hdb', 'ptp', 'blu', 'no_season', 'no_aka', 'no_year', 'no_dub', 'no_tag', 'client', 'desclink', 'descfile', 'desc', 'draft', 'region', 'freeleech', 
+                        'hdb', 'ptp', 'blu', 'no_season', 'no_aka', 'no_year', 'no_dub', 'no_tag', 'no_seed', 'client', 'desclink', 'descfile', 'desc', 'draft', 'region', 'freeleech', 
                         'personalrelease', 'unattended', 'season', 'episode', 'torrent_creation', 'qbit_tag', 'qbit_cat', 'skip_imghost_upload', 'imghost', 'manual_source', 'webdv', 'hardcoded-subs',
                         'source_path'
                     ]
@@ -193,11 +198,11 @@ async def do_the_thing(base_dir):
                 if reuse_torrent != None:
                     prep.create_base_from_existing_torrent(reuse_torrent, meta['base_dir'], meta['uuid'])
             if meta['nohash'] == False and reuse_torrent == None:
-                prep.create_torrent(meta, Path(meta['path']))
+                prep.create_torrent(meta, Path(meta['path']), "BASE", meta.get('piece_size_max', 0))
             if meta['nohash']:
                 meta['client'] = "none"
         elif os.path.exists(os.path.abspath(f"{meta['base_dir']}/tmp/{meta['uuid']}/BASE.torrent")) and meta.get('rehash', False) == True and meta['nohash'] == False:
-            prep.create_torrent(meta, Path(meta['path']))
+            prep.create_torrent(meta, Path(meta['path']), "BASE", meta.get('piece_size_max', 0))
         if int(meta.get('randomized', 0)) >= 1:
             prep.create_random_torrents(meta['base_dir'], meta['uuid'], meta['randomized'], meta['path'])
             
@@ -236,13 +241,12 @@ async def do_the_thing(base_dir):
         #######  Upload to Trackers  #######
         ####################################
         common = COMMON(config=config)
-        api_trackers = ['BLU', 'AITHER', 'STC', 'R4E', 'STT', 'RF', 'ACM','LCD','LST','HUNO', 'SN', 'LT', 'NBL', 'ANT', 'JPTV', 'TDC']
+        api_trackers = ['BLU', 'AITHER', 'STC', 'R4E', 'STT', 'RF', 'ACM','LCD','LST','HUNO', 'SN', 'LT', 'NBL', 'ANT', 'JPTV', 'TDC', 'OE', 'BHDTV', 'RTF']
         http_trackers = ['HDB', 'TTG', 'FL', 'PTER', 'HDT', 'MTV']
         tracker_class_map = {
             'BLU' : BLU, 'BHD': BHD, 'AITHER' : AITHER, 'STC' : STC, 'R4E' : R4E, 'THR' : THR, 'STT' : STT, 'HP' : HP, 'PTP' : PTP, 'RF' : RF, 'SN' : SN, 
             'ACM' : ACM, 'HDB' : HDB, 'LCD': LCD, 'TTG' : TTG, 'LST' : LST, 'HUNO': HUNO, 'FL' : FL, 'LT' : LT, 'NBL' : NBL, 'ANT' : ANT, 'PTER': PTER, 'JPTV' : JPTV,
-            'TL' : TL, 'TDC' : TDC, 'HDT' : HDT, 'MTV': MTV
-            }
+            'TL' : TL, 'TDC' : TDC, 'HDT' : HDT, 'MTV': MTV, 'OE': OE, 'BHDTV': BHDTV, 'RTF':RTF}
 
         for tracker in trackers:
             if meta['name'].endswith('DUPE?'):
@@ -265,6 +269,7 @@ async def do_the_thing(base_dir):
                         continue
                     dupes = await tracker_class.search_existing(meta)
                     dupes = await common.filter_dupes(dupes, meta)
+                    # note BHDTV does not have search implemented.
                     meta = dupe_check(dupes, meta)
                     if meta['upload'] == True:
                         await tracker_class.upload(meta)
@@ -410,8 +415,7 @@ async def do_the_thing(base_dir):
                     if check_banned_group(tracker_class.tracker, tracker_class.banned_groups, meta):
                         continue
                     await tracker_class.upload(meta)
-                    await client.add_to_client(meta, tracker_class.tracker)
-            
+                    await client.add_to_client(meta, tracker_class.tracker)            
 
 
 def get_confirmation(meta):

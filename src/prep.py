@@ -381,13 +381,13 @@ class Prep():
         meta.get('anon', False)
         meta['anon'] = self.is_anon(meta['anon'])
             
-        if meta.get('image_list', False) == False and meta.get('skip_imghost_upload', False) == False:
+        if meta.get('image_list', False) in (False, []) and meta.get('skip_imghost_upload', False) == False:
             return_dict = {}
             meta['image_list'], dummy_var = self.upload_screens(meta, meta['screens'], 1, 0, meta['screens'],[], return_dict)
             if meta['debug']:
                 console.print(meta['image_list'])
             # meta['uploaded_screens'] = True
-        elif meta.get('skip_imghost_upload', False):
+        elif meta.get('skip_imghost_upload', False) == True and meta.get('image_list', False) == False:
             meta['image_list'] = []
         
         meta = await self.gen_desc(meta)
@@ -1946,7 +1946,8 @@ class Prep():
     """
     Create Torrent
     """
-    def create_torrent(self, meta, path):
+    def create_torrent(self, meta, path, output_filename, piece_size_max):
+        piece_size_max = int(piece_size_max) if piece_size_max is not None else 0
         if meta['isdir'] == True:
             os.chdir(path)
             globs = glob.glob1(path, "*.mkv") + glob.glob1(path, "*.mp4") + glob.glob1(path, "*.ts")
@@ -1970,28 +1971,35 @@ class Prep():
             creation_date = datetime.now(),
             comment = "Created by L4G's Upload Assistant",
             created_by = "L4G's Upload Assistant")
-        console.print("[bold yellow]Creating .torrent... (No valid --torrenthash was provided)")
         file_size = torrent.size
-        if file_size < 268435456: # 256 MiB
+        if file_size < 268435456: # 256 MiB File / 256 KiB Piece Size
             piece_size = 18
-        elif file_size < 1073741824:  # 1 GiB
+            piece_size_text = "256KiB"
+        elif file_size < 1073741824:  # 1 GiB File/512 KiB Piece Size
             piece_size = 19
-        elif file_size < 2147483648:  # 2 GiB
+            piece_size_text = "512KiB"
+        elif file_size < 2147483648 or piece_size_max == 1:  # 2 GiB File/1 MiB Piece Size
             piece_size = 20
-        elif file_size < 4294967296:  # 4 GiB
+            piece_size_text = "1MiB"
+        elif file_size < 4294967296 or piece_size_max == 2:  # 4 GiB File/2 MiB Piece Size
             piece_size = 21
-        elif file_size < 8589934592:  # 8 GiB
+            piece_size_text = "2MiB"
+        elif file_size < 8589934592 or piece_size_max == 4:  # 8 GiB File/4 MiB Piece Size
             piece_size = 22
-        elif file_size < 17179869184:  # 16 GiB
+            piece_size_text = "4MiB"
+        elif file_size < 17179869184 or piece_size_max == 8:  # 16 GiB File/8 MiB Piece Size
             piece_size = 23
-        else:
+            piece_size_text = "8MiB"
+        else: # 16MiB Piece Size
             piece_size = 24
+            piece_size_text = "16MiB"
+        console.print(f"[bold yellow]Creating .torrent with a piece size of {piece_size_text}... (No valid --torrenthash was provided to reuse)")
         if meta.get('torrent_creation') != None:
             torrent_creation = meta['torrent_creation']
         else:
             torrent_creation = self.config['DEFAULT'].get('torrent_creation', 'torf')
         if torrent_creation == 'torrenttools':
-            args = ['torrenttools', 'create', '-a', 'https://fake.tracker', '--private', 'on', '--piece-size', str(2**piece_size), '--created-by', "L4G's Upload Assistant", '--no-cross-seed','-o', f"{meta['base_dir']}/tmp/{meta['uuid']}/BASE.torrent"]
+            args = ['torrenttools', 'create', '-a', 'https://fake.tracker', '--private', 'on', '--piece-size', str(2**piece_size), '--created-by', "L4G's Upload Assistant", '--no-cross-seed','-o', f"{meta['base_dir']}/tmp/{meta['uuid']}/{output_filename}.torrent"]
             if not meta['is_disc']:
                 args.extend(['--include', '^.*\.(mkv|mp4|ts)$'])
             args.append(path)
@@ -2000,7 +2008,7 @@ class Prep():
                 args[3] = "OMITTED"
                 console.print(f"[bold red]Process execution {args} returned with error code {err}.") 
         elif torrent_creation == 'mktorrent':
-            args = ['mktorrent', '-a', 'https://fake.tracker', '-p', f'-l {piece_size}', '-o', f"{meta['base_dir']}/tmp/{meta['uuid']}/BASE.torrent", path]
+            args = ['mktorrent', '-a', 'https://fake.tracker', '-p', f'-l {piece_size}', '-o', f"{meta['base_dir']}/tmp/{meta['uuid']}/{output_filename}.torrent", path]
             err = subprocess.call(args)
             if err != 0:
                 args[2] = "OMITTED"
@@ -2009,7 +2017,7 @@ class Prep():
             torrent.piece_size = 2**piece_size
             torrent.piece_size_max = 16777216
             torrent.generate(callback=self.torf_cb, interval=5)
-            torrent.write(f"{meta['base_dir']}/tmp/{meta['uuid']}/BASE.torrent", overwrite=True)
+            torrent.write(f"{meta['base_dir']}/tmp/{meta['uuid']}/{output_filename}.torrent", overwrite=True)
             torrent.verify_filesize(path)
         console.print("[bold green].torrent created", end="\r")
         return torrent

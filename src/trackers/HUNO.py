@@ -42,6 +42,11 @@ class HUNO():
         else:
             anon = 1
 
+        # adding logic to check if its an encode or webrip and not HEVC as only HEVC encodes and webrips are allowed
+        if meta['video_codec'] != "HEVC" and (meta['type'] == "ENCODE" or meta['type'] == "WEBRIP"):
+            console.print(f'[bold red]Only x265/HEVC encodes are allowed')
+            return
+
         if meta['bdinfo'] != None:
             mi_dump = None
             bd_dump = open(f"{meta['base_dir']}/tmp/{meta['uuid']}/BD_SUMMARY_00.txt", 'r', encoding='utf-8').read()
@@ -94,6 +99,9 @@ class HUNO():
             response = requests.post(url=self.upload_url, files=files, data=data, headers=headers, params=params)
             try:
                 console.print(response.json())
+                # adding torrent link to comment of torrent file
+                t_id = response.json()['data'].split(".")[1].split("/")[3]
+                await common.add_tracker_torrent(meta, self.tracker, self.source_flag, self.config['TRACKERS'][self.tracker].get('announce_url'), "https://hawke.uno/torrents/" + t_id)
             except:
                 console.print("It may have uploaded, go check")
                 return
@@ -139,6 +147,8 @@ class HUNO():
             repack = f"[{repack}]"
         three_d = meta.get('3D', "")
         tag = meta.get('tag', "").replace("-", "- ")
+        if tag == "":
+            tag = "- NOGRP"
         source = meta.get('source', "")
         uhd = meta.get('uhd', "")
         hdr = meta.get('hdr', "")
