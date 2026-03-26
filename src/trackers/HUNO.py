@@ -36,7 +36,6 @@ class HUNO():
         await common.edit_torrent(meta, self.tracker, self.source_flag)
         cat_id = await self.get_cat_id(meta['category'])
         type_id = await self.get_type_id(meta)
-        resolution_id = await self.get_res_id(meta['resolution'])
         if meta['anon'] == 0 and bool(distutils.util.strtobool(self.config['TRACKERS']['HUNO'].get('anon', "False"))) == False:
             anon = 0
         else:
@@ -48,36 +47,27 @@ class HUNO():
             return
 
         if meta['bdinfo'] != None:
-            mi_dump = None
-            bd_dump = open(f"{meta['base_dir']}/tmp/{meta['uuid']}/BD_SUMMARY_00.txt", 'r', encoding='utf-8').read()
+            mi_open = None
+            bd_open = open(f"{meta['base_dir']}/tmp/{meta['uuid']}/BD_SUMMARY_00.txt", 'r', encoding='utf-8')
+            open_sourcemi = None
         else:
-            mi_dump = open(f"{meta['base_dir']}/tmp/{meta['uuid']}/MEDIAINFO.txt", 'r', encoding='utf-8').read()
-            bd_dump = None
-        desc = open(f"{meta['base_dir']}/tmp/{meta['uuid']}/DESCRIPTION.txt", 'r').read()
+            mi_open = open(f"{meta['base_dir']}/tmp/{meta['uuid']}/MEDIAINFO.txt", 'r', encoding='utf-8')
+            bd_open = None
+            open_sourcemi = open(f"{meta['base_dir']}/tmp/{meta['uuid']}/SOURCE_MEDIAINFO.txt", 'r', encoding='utf-8')
+        open_desc = open(f"{meta['base_dir']}/tmp/{meta['uuid']}/DESCRIPTION.txt", 'r')
         open_torrent = open(f"{meta['base_dir']}/tmp/{meta['uuid']}/[HUNO]{meta['clean_name']}.torrent", 'rb')
-        files = {'torrent': open_torrent}
+        files = {
+            'bdinfo' : ("bdinfo.txt", bd_open),
+            'description': ("description.txt", open_desc),
+            'mediainfo': ("mediainfo.txt", mi_open),
+            'source_mediainfo': ("source_mediainfo.txt", open_sourcemi),
+            'torrent': (f"{await self.get_name(meta)}.torrent", open_torrent)
+        }
         data = {
-            'name' : await self.get_name(meta),
-            'description' : desc,
-            'mediainfo' : mi_dump,
-            'bdinfo' : bd_dump,
-            'category_id' : cat_id,
-            'type_id' : type_id,
-            'resolution_id' : resolution_id,
-            'tmdb' : meta['tmdb'],
-            'imdb' : meta['imdb_id'].replace('tt', ''),
-            'tvdb' : meta['tvdb_id'],
-            'mal' : meta['mal_id'],
-            'igdb' : 0,
             'anonymous' : anon,
-            'stream' : await self.is_plex_friendly(meta),
-            'sd' : meta['sd'],
-            'keywords' : meta['keywords'],
-            'season_pack': meta.get('tv_pack', 0),
-            # 'featured' : 0,
-            # 'free' : 0,
-            # 'double_up' : 0,
-            # 'sticky' : 0,
+            'category_id' : cat_id,
+            'tmdb' : meta['tmdb'],
+            'type_id' : type_id
         }
 
         tracker_config = self.config['TRACKERS'][self.tracker]
@@ -247,15 +237,6 @@ class HUNO():
             '480i': '9'
             }.get(resolution, '10')
         return resolution_id
-
-
-    async def is_plex_friendly(self, meta):
-        lossy_audio_codecs = ["AAC", "DD", "DD+", "OPUS"]
-
-        if any(l in meta["audio"] for l in lossy_audio_codecs):
-            return 1
-
-        return 0
 
 
     async def search_existing(self, meta):

@@ -49,7 +49,7 @@ class THR():
                     return
                 else:
                     thr_name = thr_name_manually
-        torrent_name = re.sub("[^0-9a-zA-Z. '\-\[\]]+", " ", thr_name)
+        torrent_name = re.sub(r"[^0-9a-zA-Z. '\-\[\]]+", " ", thr_name)
 
 
         if meta.get('is_disc', '') == 'BDMV':
@@ -192,7 +192,7 @@ class THR():
             desc.write("[quote=Info]")
             name_aka = f"{meta['title']} {meta['aka']} {meta['year']}"
             name_aka = unidecode(name_aka)
-            # name_aka = re.sub("[^0-9a-zA-Z. '\-\[\]]+", " ", name_aka)
+            # name_aka = re.sub(r"[^0-9a-zA-Z. '\-\[\]]+", " ", name_aka)
             desc.write(f"Name: {' '.join(name_aka.split())}\n\n")
             desc.write(f"Overview: {meta['overview']}\n\n")
             desc.write(f"{res} / {meta['type']}{tag}\n\n")
