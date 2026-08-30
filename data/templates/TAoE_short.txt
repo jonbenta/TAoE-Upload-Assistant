@@ -1,0 +1,9 @@
+[center][img]{{ taoe_banner_url }}[/img]
+
+{% for image in image_list %}
+    [url={{ image['raw_url'] }}][img]{{ image['raw_url'] }}[/img][/url]
+{% endfor %}[/center]
+
+[u][b]Source Media Information[/b][/u]
+
+{{ source_mediainfo_text }}

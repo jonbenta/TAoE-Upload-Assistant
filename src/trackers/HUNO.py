@@ -54,7 +54,7 @@ class HUNO():
             mi_open = open(f"{meta['base_dir']}/tmp/{meta['uuid']}/MEDIAINFO.txt", 'r', encoding='utf-8')
             bd_open = None
             open_sourcemi = open(f"{meta['base_dir']}/tmp/{meta['uuid']}/SOURCE_MEDIAINFO.txt", 'r', encoding='utf-8')
-        open_desc = open(f"{meta['base_dir']}/tmp/{meta['uuid']}/DESCRIPTION.txt", 'r')
+        open_desc = open(f"{meta['base_dir']}/tmp/{meta['uuid']}/DESCRIPTION_SHORT.txt", 'r')
         open_torrent = open(f"{meta['base_dir']}/tmp/{meta['uuid']}/[HUNO]{meta['clean_name']}.torrent", 'rb')
         files = {
             'bdinfo' : ("bdinfo.txt", bd_open),

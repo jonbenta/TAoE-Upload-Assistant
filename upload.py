@@ -90,6 +90,7 @@ async def do_the_thing(base_dir):
     meta = dict()
     meta['base_dir'] = base_dir
     meta['desc_template'] = 'TAoE'
+    meta['desc_template_short'] = 'TAoE_short'
     meta['taoe_banner_url'] = config['DEFAULT']['taoe_banner_url']
     paths = []
     for each in sys.argv[1:]:

@@ -47,7 +47,7 @@ class OE():
         else:
             mi_dump = open(f"{meta['base_dir']}/tmp/{meta['uuid']}/MEDIAINFO.txt", 'r', encoding='utf-8').read()
             bd_dump = None
-        desc = open(f"{meta['base_dir']}/tmp/{meta['uuid']}/[{self.tracker}]DESCRIPTION.txt", 'r').read()
+        desc = open(f"{meta['base_dir']}/tmp/{meta['uuid']}/DESCRIPTION_SHORT.txt", 'r').read()
         open_torrent = open(f"{meta['base_dir']}/tmp/{meta['uuid']}/[{self.tracker}]{meta['clean_name']}.torrent", 'rb')
         files = {'torrent': open_torrent}
         data = {
@@ -107,6 +107,7 @@ class OE():
 
     async def edit_name(self, meta):
         oe_name = meta.get('name')
+        oe_name = oe_name.replace(" TAoE", "(TAoE)")
         return oe_name
 
     async def get_cat_id(self, category_name):
@@ -171,7 +172,7 @@ class OE():
             'api_token' : self.config['TRACKERS'][self.tracker]['api_key'].strip(),
             'tmdbId' : meta['tmdb'],
             'categories[]' : await self.get_cat_id(meta['category']),
-            'types[]' : await self.get_type_id(meta['type'], meta.get('tv_pack', 0), meta.get('sd', 0), meta.get('category', "")),
+            'types[]' : await self.get_type_id(meta['type'], meta.get('tv_pack', 0), meta.get('video_codec', 0), meta.get('category', "")),
             'resolutions[]' : await self.get_res_id(meta['resolution']),
             'name' : ""
         }

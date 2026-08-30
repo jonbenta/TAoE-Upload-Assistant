@@ -189,7 +189,7 @@ class Prep():
                 meta['source_mediainfo_text'] = MediaInfo.parse(source_videopath, output="STRING", full=False, mediainfo_options={'inform_version' : '1'}).replace(source_videopath, os.path.basename(source_videopath))
 
             console.print("[bold yellow]Exporting Source MediaInfo...")
-            with open(f"{base_dir}/tmp/{folder_id}/SOURCE_MEDIAINFO.txt", 'w', newline="", encoding='utf-8') as export:
+            with open(f"{base_dir}/tmp/{meta['uuid']}/SOURCE_MEDIAINFO.txt", 'w', newline="", encoding='utf-8') as export:
                 export.write(meta['source_mediainfo_text'])
                 export.close()
             console.print("[bold green]Source MediaInfo Exported.")
@@ -2747,6 +2747,15 @@ class Prep():
                     if template_desc.strip() != "":
                         description.write(template_desc)
                         description.write("\n")
+
+            if meta.get('desc_template_short', None) != None:
+                with open(f"{meta['base_dir']}/tmp/{meta['uuid']}/DESCRIPTION_SHORT.txt", 'w', newline="", encoding='utf8') as description_short:
+                    from jinja2 import Template
+                    with open(f"{meta['base_dir']}/data/templates/{meta['desc_template_short']}.txt", 'r') as f:
+                        desc_templater = Template(f.read())
+                        template_desc = desc_templater.render(meta)
+                        if template_desc.strip() != "":
+                            description_short.write(template_desc)
 
             if meta['nfo'] != False:
                 description.write("[code]")
