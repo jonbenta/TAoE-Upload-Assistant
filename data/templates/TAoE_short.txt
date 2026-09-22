@@ -4,6 +4,6 @@
     [url={{ image['raw_url'] }}][img]{{ image['raw_url'] }}[/img][/url]
 {% endfor %}[/center]
 
-[u][b]Source Media Information[/b][/u]
-
+[spoiler=Click here to view Source Mediainfo]
 {{ source_mediainfo_text }}
+[/spoiler]
